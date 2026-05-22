@@ -20,7 +20,6 @@ let turnoActual = null;
 // sockets
 
 io.on('connection', (socket) => {
-
     console.log('Cliente conectado');
 
     // generar turnos -->
@@ -33,45 +32,32 @@ io.on('connection', (socket) => {
 
         // avisar nuevo turno
         io.emit('nuevo-turno', nuevoTurno);
-
         // actualizar cola
         io.emit('cola-actualizada', colaTurnos);
-
     });
 
 
-    // -------- ATENDER TURNO --------
+    // atender turnos
 
     socket.on('atender-turno', () => {
-
         if (colaTurnos.length === 0) return;
 
         turnoActual = colaTurnos.shift();
 
         // actualizar pantalla principal
         io.emit('turno-actual', turnoActual);
-
         // actualizar cola
         io.emit('cola-actualizada', colaTurnos);
-
     });
 
 
-    // -------- ENVIAR ESTADO ACTUAL --------
-
+    // enviar estado
     socket.emit('cola-actualizada', colaTurnos);
-
     socket.emit('turno-actual', turnoActual);
 
 });
 
 
-// =====================
-// SERVER
-// =====================
-
 server.listen(3000, () => {
-
     console.log('Servidor corriendo en puerto 3000');
-
 });
