@@ -38,7 +38,7 @@ button{
     color:white;
     font-size:1rem;
     cursor:pointer;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 button:hover{
@@ -47,7 +47,7 @@ button:hover{
 
 ul{
     list-style:none;
-    margin-bottom:20px;
+    margin-top: 15px;
 }
 
 li{

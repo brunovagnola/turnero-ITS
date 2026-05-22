@@ -1,22 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket Generation</title>
+    <title>Generar Turno</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="/socket.io/socket.io.js" defer></script>
     <script src="./js/createTicket.js" defer></script>
-    <link rel="stylesheet" href="./css/styles.css">
 </head>
-<body>
-<body>
-    <main class="pantalla-generador">
 
-        <h1>Atención</h1>
-        <button id="btnGenerar">Generar turno</button>
-        <p id="ultimoGenerado">Último: A-000</p>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center">
+
+    <main
+        class="bg-white w-full max-w-xl rounded-3xl shadow-2xl p-12 text-center">
+
+        <h1 class="text-4xl font-bold text-slate-800 mb-10">
+            Generar Turno
+        </h1>
+
+        <button
+            id="btnGenerar"
+            class="bg-blue-600 hover:bg-blue-700 transition-all duration-300 text-white text-xl font-bold px-10 py-5 rounded-2xl shadow-lg">
+
+            Generar turno
+
+        </button>
+
+        <p
+            id="ultimoGenerado"
+            class="mt-8 text-2xl text-slate-600">
+
+            Último: A-000
+
+        </p>
 
     </main>
-</body>
+
 </body>
 </html>

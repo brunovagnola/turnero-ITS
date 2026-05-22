@@ -1,23 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turnos</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="/socket.io/socket.io.js" defer></script>
     <script src="./js/main.js" defer></script>
-    <link rel="stylesheet" href="./css/styles.css">
 </head>
-<body>
-    <main class="pantalla-principal">
 
-        <h1>Turnos</h1>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center">
 
-        <section class="turno-actual">
-            <p>Turno en atención</p>
-            <h2 id="turnoActual">A-000</h2>
+    <main class="w-full max-w-3xl p-10">
+
+        <section class="bg-white rounded-3xl shadow-2xl p-12 text-center">
+
+            <h1 class="text-5xl font-bold text-slate-800 mb-10">
+                Turnero
+            </h1>
+
+            <div
+                class="bg-gradient-to-br from-blue-600 to-slate-700 rounded-3xl p-10 shadow-xl">
+
+                <p class="text-slate-200 text-xl mb-4">
+                    Turno en atención
+                </p>
+
+                <h2
+                    id="turnoActual"
+                    class="text-8xl font-extrabold text-white tracking-widest">
+
+                    A-000
+
+                </h2>
+
+            </div>
+
         </section>
 
     </main>
+
 </body>
 </html>

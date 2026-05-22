@@ -1,34 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket Line</title>
+    <title>Cola de Turnos</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="/socket.io/socket.io.js" defer></script>
     <script src="./js/line.js" defer></script>
-    <link rel="stylesheet" href="./css/styles.css">
 </head>
-<body>
-<body>
-    <main class="pantalla-cola">
 
-        <h1>Cola de Turnos</h1>
+<body class="bg-slate-100 min-h-screen flex items-center justify-center">
 
-        <ul id="listaTurnos">
+    <main
+        class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl p-10">
 
-            <li>A-001</li>
-            <li>A-002</li>
-            <li>A-003</li>
+        <div class="flex items-center justify-between mb-8">
+
+            <div>
+
+                <h1 class="text-4xl font-bold text-slate-800">
+                    Cola de Turnos
+                </h1>
+
+                <p class="text-slate-500 mt-2">
+                    Turnos pendientes
+                </p>
+
+            </div>
+
+            <button
+                id="btnAtender"
+                class="bg-blue-600 hover:bg-blue-700 transition text-white font-bold px-6 py-3 rounded-2xl shadow-lg">
+
+                Atender
+
+            </button>
+
+        </div>
+
+        <ul
+            id="listaTurnos"
+            class="flex flex-col gap-4">
+
+            <li
+                class="bg-slate-100 border border-slate-200 rounded-2xl p-5 flex items-center justify-between">
+
+                <span class="text-xl font-semibold text-slate-700">
+                    A-001
+                </span>
+
+                <span
+                    class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">
+
+                    Esperando
+
+                </span>
+
+            </li>
 
         </ul>
 
-        <button id="btnAtender">
-            Atender siguiente
-        </button>
-
     </main>
 
-
-</body>
 </body>
 </html>
