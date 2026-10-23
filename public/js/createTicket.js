@@ -1,3 +1,4 @@
+
 const socket = io();
 
 const btnGenerar = document.getElementById("btnGenerar");
@@ -7,6 +8,10 @@ btnGenerar.addEventListener("click", () => {
     socket.emit("generar-turno");
 });
 
-socket.on("nuevo-turno", (turno) => {
-    ultimoGenerado.textContent = `Último: ${turno}`;
+socket.on("ultimo-turno", (turno) => {
+    ultimoGenerado.textContent = `Último: ${turno || "Ninguno"}`;
+});
+
+socket.on("error-turnero", (mensaje) => {
+    alert(mensaje);
 });
