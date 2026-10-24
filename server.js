@@ -2,120 +2,113 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-const fs = require("fs");
 const path = require("path");
+const pool = require("./db");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
-const DATA_FILE = path.join(DATA_DIR, "turnos.json");
 
 app.use(express.static(path.join(__dirname, "public")));
 
-function estadoInicial() {
+async function obtenerEstado() {
+    const [pendientes, actual, ultimo] = await Promise.all([
+        pool.query(
+            "SELECT numero FROM turnos WHERE estado = 'esperando' ORDER BY id"
+        ),
+        pool.query(
+            `SELECT numero FROM turnos
+            WHERE estado = 'atendido'
+            ORDER BY fecha_atencion DESC, id DESC LIMIT 1`
+        ),
+        pool.query(
+            "SELECT numero FROM turnos ORDER BY id DESC LIMIT 1"
+        )
+    ]);
+
     return {
-        contador: 0,
-        colaTurnos: [],
-        turnoActual: null
+        colaTurnos: pendientes.rows.map(t => t.numero),
+        turnoActual: actual.rows[0]?.numero || null,
+        ultimoTurno: ultimo.rows[0]?.numero || null
     };
 }
 
-function cargarEstado() {
+async function emitirEstado() {
+    const estado = await obtenerEstado();
+
+    io.emit("cola-actualizada", estado.colaTurnos);
+    io.emit("turno-actual", estado.turnoActual);
+    io.emit("ultimo-turno", estado.ultimoTurno);
+}
+
+app.get("/health", async (req, res) => {
     try {
-        const datos = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-
-        if (
-            !Number.isSafeInteger(datos.contador) ||
-            datos.contador < 0 ||
-            !Array.isArray(datos.colaTurnos) ||
-            !datos.colaTurnos.every(t => typeof t === "string") ||
-            !(datos.turnoActual === null ||
-            typeof datos.turnoActual === "string")
-        ) {
-            throw new Error("Estado inválido");
-        }
-
-        return datos;
+        await pool.query("SELECT 1");
+        res.json({ status: "ok", servicio: "turnero-its" });
     } catch (error) {
-        if (error.code !== "ENOENT") {
-            throw error;
-        }
-        return estadoInicial();
+        res.status(503).json({ status: "error", servicio: "turnero-its" });
     }
-}
-
-fs.mkdirSync(DATA_DIR, { recursive: true });
-
-let estado = cargarEstado();
-
-function guardarEstado(nuevoEstado) {
-    const temporal = DATA_FILE + ".tmp";
-    fs.writeFileSync(temporal, JSON.stringify(nuevoEstado, null, 2));
-    fs.renameSync(temporal, DATA_FILE);
-    estado = nuevoEstado;
-}
-
-function ultimoTurno() {
-    return estado.contador > 0
-        ? `A-${String(estado.contador).padStart(3, "0")}`
-        : null;
-}
-
-function enviarEstado(socket) {
-    socket.emit("cola-actualizada", estado.colaTurnos);
-    socket.emit("turno-actual", estado.turnoActual);
-    socket.emit("ultimo-turno", ultimoTurno());
-}
-
-app.get("/health", (req, res) => {
-    res.status(200).json({
-        status: "ok",
-        servicio: "turnero-its"
-    });
 });
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     console.log("Cliente conectado:", socket.id);
 
-    enviarEstado(socket);
+    try {
+        const estado = await obtenerEstado();
 
-    socket.on("generar-turno", () => {
-        const contador = estado.contador + 1;
-        const nuevoTurno = `A-${String(contador).padStart(3, "0")}`;
+        socket.emit("cola-actualizada", estado.colaTurnos);
+        socket.emit("turno-actual", estado.turnoActual);
+        socket.emit("ultimo-turno", estado.ultimoTurno);
+    } catch (error) {
+        console.error("Error al cargar estado:", error);
+        socket.emit("error-turnero", "No se pudo cargar el estado");
+    }
 
+    socket.on("generar-turno", async () => {
         try {
-            guardarEstado({
-                ...estado,
-                contador,
-                colaTurnos: [...estado.colaTurnos, nuevoTurno]
-            });
+            const resultado = await pool.query(`
+                INSERT INTO turnos (numero)
+                VALUES (
+                    'A-' || LPAD(
+                        nextval('turnos_numero_seq')::text, 3, '0'
+                    )
+                )
+                RETURNING numero
+            `);
+
+            const nuevoTurno = resultado.rows[0].numero;
 
             io.emit("nuevo-turno", nuevoTurno);
-            io.emit("ultimo-turno", nuevoTurno);
-            io.emit("cola-actualizada", estado.colaTurnos);
+            await emitirEstado();
         } catch (error) {
-            console.error("Error al guardar turno:", error);
-            socket.emit("error-turnero", "No se pudo guardar el turno");
+            console.error("Error al generar turno:", error);
+            socket.emit("error-turnero", "No se pudo generar el turno");
         }
     });
 
-    socket.on("atender-turno", () => {
-        if (estado.colaTurnos.length === 0) return;
-
-        const turnoActual = estado.colaTurnos[0];
-
+    socket.on("atender-turno", async () => {
         try {
-            guardarEstado({
-                ...estado,
-                turnoActual,
-                colaTurnos: estado.colaTurnos.slice(1)
-            });
+            const resultado = await pool.query(`
+                WITH siguiente AS (
+                    SELECT id
+                    FROM turnos
+                    WHERE estado = 'esperando'
+                    ORDER BY id
+                    LIMIT 1
+                    FOR UPDATE SKIP LOCKED
+                )
+                UPDATE turnos
+                SET estado = 'atendido',
+                    fecha_atencion = NOW()
+                WHERE id = (SELECT id FROM siguiente)
+                RETURNING numero
+            `);
 
-            io.emit("turno-actual", estado.turnoActual);
-            io.emit("cola-actualizada", estado.colaTurnos);
+            if (resultado.rowCount === 0) return;
+
+            await emitirEstado();
         } catch (error) {
             console.error("Error al atender turno:", error);
             socket.emit("error-turnero", "No se pudo atender el turno");
@@ -123,6 +116,18 @@ io.on("connection", (socket) => {
     });
 });
 
-server.listen(PORT, "0.0.0.0", () => {
-    console.log(`Turnero funcionando en puerto ${PORT}`);
-});
+async function iniciarServidor() {
+    try {
+        await pool.query("SELECT 1");
+        console.log("Conexión con PostgreSQL establecida");
+
+        server.listen(PORT, "0.0.0.0", () => {
+            console.log(`Turnero funcionando en puerto ${PORT}`);
+        });
+    } catch (error) {
+        console.error("No se pudo conectar a PostgreSQL:", error.message);
+        process.exit(1);
+    }
+}
+
+iniciarServidor();
