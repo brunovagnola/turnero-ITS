@@ -46,6 +46,23 @@ services:
     volumes:
       - uptime_kuma_data:/app/data
 
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:2.16.0
+    container_name: turnero-proxy
+    restart: unless-stopped
+
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+
   turnero:
     build: .
     container_name: turnero-app
@@ -70,3 +87,5 @@ volumes:
   postgres_data:
   portainer_data:
   uptime_kuma_data:
+  npm_data:
+  npm_letsencrypt:
