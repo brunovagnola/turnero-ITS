@@ -1,0 +1,4 @@
+# Crontab de root: agregar esta entrada sin reemplazar otras tareas.
+# Horario: 02:00, zona America/Argentina/Buenos_Aires.
+# Requiere la VM encendida, Docker activo y el proyecto configurado.
+0 2 * * * /home/bruno/turnero-ITS/scripts/backup.sh >> /var/log/turnero-backup.log 2>&1
