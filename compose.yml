@@ -23,6 +23,18 @@ services:
       timeout: 5s
       retries: 5
 
+  portainer:
+    image: portainer/portainer-ce:lts
+    container_name: turnero-portainer
+    restart: unless-stopped
+
+    ports:
+      - "9443:9443"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
   turnero:
     build: .
     container_name: turnero-app
@@ -45,3 +57,4 @@ services:
 
 volumes:
   postgres_data:
+  portainer_data:
