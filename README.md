@@ -1,156 +1,202 @@
 # Turnero ITS
 
-Sistema web de gestión de turnos desarrollado con Node.js, Express y Socket.IO. Permite generar turnos, administrar una cola de espera y visualizar en tiempo real el turno que se encuentra en atención.
+Sistema web de gestión de turnos desarrollado con Node.js, Express, Socket.IO y PostgreSQL. Permite generar turnos correlativos, administrar una cola de espera y mostrar el turno en atención con actualización en tiempo real.
 
-El proyecto fue desarrollado originalmente para la materia **Integración de Aplicaciones** del **Instituto Técnico Superior de Cipolletti (ITS)**.
+El proyecto fue desarrollado originalmente para **Integración de Aplicaciones** y ampliado para el trabajo final de **Laboratorio Full Stack II**, del **Instituto Técnico Superior de Cipolletti**.
 
-Actualmente se encuentra en una etapa de ampliación y adaptación para la materia **Laboratorio Full Stack II**, con el objetivo de implementar un entorno de despliegue, administración, monitoreo y mantenimiento de aplicaciones mediante Docker Compose.
-
-## 1. Descripción del proyecto
-
-Turnero ITS es una aplicación web que simula el funcionamiento de un sistema de atención por turnos.
-
-Su arquitectura utiliza un servidor Node.js que administra los turnos y establece la comunicación entre las distintas interfaces mediante Socket.IO, permitiendo que los cambios se reflejen en tiempo real sin necesidad de actualizar manualmente las páginas.
-
-El sistema dispone de tres interfaces principales:
-
-- **Generación de turnos:** permite solicitar un nuevo turno mediante una numeración correlativa.
-- **Administración de la cola:** muestra los turnos pendientes y permite llamar al siguiente.
-- **Pantalla de atención:** muestra el turno que está siendo atendido.
-
-## 2. Tecnologías utilizadas
-
-| Tecnología | Función |
-|---|---|
-| Node.js | Ejecución del servidor |
-| Express | Servidor HTTP y distribución de archivos estáticos |
-| Socket.IO | Comunicación bidireccional en tiempo real |
-| JavaScript | Lógica del servidor y del cliente |
-| HTML5 | Estructura de las interfaces |
-| Tailwind CSS | Diseño y estilos de las pantallas |
-
-## 3. Funcionalidades implementadas
-
-La versión actual de la aplicación incorpora:
+## 1. Funcionalidades
 
 - Generación de turnos con numeración correlativa.
-- Administración de una cola de espera siguiendo el orden de llegada.
-- Visualización del turno en atención.
-- Actualización de las interfaces mediante eventos de Socket.IO.
-- Sincronización del estado al establecer nuevas conexiones.
-- Persistencia local mediante almacenamiento JSON.
-- Endpoint HTTP `/health` para comprobar la disponibilidad del servidor.
+- Atención de turnos según su orden de llegada.
+- Visualización de turnos pendientes y del turno en atención.
+- Actualización de las interfaces mediante Socket.IO.
+- Persistencia de datos y secuencias en PostgreSQL.
+- Endpoint `/health`, que verifica la conexión con la base de datos.
 
-La persistencia mediante JSON corresponde a la implementación actual y será reemplazada por PostgreSQL durante la siguiente etapa de desarrollo.
+## 2. Entorno implementado
+
+El despliegue se realizó en una máquina virtual con Debian 13, utilizando Docker Engine y Docker Compose.
+
+| Componente | Función |
+|---|---|
+| Node.js y Express | Servidor de la aplicación y distribución de archivos estáticos |
+| Socket.IO | Comunicación en tiempo real |
+| PostgreSQL 17 | Almacenamiento de turnos y numeración |
+| Docker Compose | Definición y ejecución del stack |
+| Cockpit | Administración del servidor Debian |
+| Portainer CE | Administración de Docker y consulta de registros |
+| Uptime Kuma | Monitoreo de disponibilidad |
+| Nginx Proxy Manager | Acceso web mediante proxy inverso |
+| Bash y cron | Respaldo programado de PostgreSQL |
+
+Cockpit se instala directamente en Debian. Los demás servicios del stack se ejecutan en contenedores.
+
+## 3. Arquitectura
+
+El navegador accede a `turnero.test`, resuelto localmente hacia la VM. Nginx Proxy Manager recibe la solicitud y la dirige al servicio `turnero`, en el puerto interno 3000.
+
+La aplicación se conecta a PostgreSQL mediante la red interna de Compose. Uptime Kuma consulta `http://turnero:3000/health`.
+
+La VM utiliza un adaptador NAT para acceder a Internet y otro host-only para la comunicación con Windows. La dirección host-only se obtiene mediante DHCP.
 
 ## 4. Estructura del proyecto
 
 ```text
 turnero-ITS/
+├── db/
+│   └── init/
+│       └── 001-turnos.sql
 ├── public/
 │   ├── js/
-│   │   ├── createTicket.js
-│   │   ├── line.js
-│   │   └── main.js
 │   ├── index.html
 │   ├── ticket-generate.html
 │   └── ticket-line.html
-├── data/
-│   └── turnos.json
+├── scripts/
+│   ├── backup.sh
+│   └── backup.cron
+├── db.js
 ├── server.js
+├── Dockerfile
+├── compose.yml
 ├── package.json
-└── package-lock.json
+├── package-lock.json
+└── README.md
 ```
 
-**Componentes principales:**
+- `server.js`: servidor HTTP, eventos y gestión de turnos.
+- `db.js`: conexión con PostgreSQL.
+- `db/init/001-turnos.sql`: definición inicial de la tabla y la secuencia.
+- `public/`: interfaces y código del navegador.
+- `scripts/backup.sh`: respaldo de PostgreSQL y retención.
+- `scripts/backup.cron`: referencia de la programación diaria.
+- `compose.yml`: servicios, puertos y volúmenes.
 
-- `server.js`: servidor HTTP, gestión de turnos y eventos de Socket.IO.
-- `public/`: archivos correspondientes a las interfaces web.
-- `public/js/`: lógica de comunicación entre las interfaces y el servidor.
-- `data/`: almacenamiento persistente local utilizado en la versión actual.
-- `package.json`: configuración del proyecto y dependencias.
+## 5. Despliegue con Docker Compose
 
-## 5. Instalación y ejecución local
+### Requisitos
 
-### Requisitos previos
+- Git.
+- Docker Engine.
+- Complemento Docker Compose.
+- Puertos necesarios disponibles.
 
-- Node.js
-- npm
-- Git
-
-### Clonar el repositorio
+Mientras la integración a `main` esté pendiente, la versión del despliegue se encuentra en `feature/despliegue-debian`.
 
 ```bash
-git clone https://github.com/brunovagnola/turnero-ITS.git
+git clone --branch feature/despliegue-debian https://github.com/brunovagnola/turnero-ITS.git
 cd turnero-ITS
 ```
 
-### Instalar dependencias
+Crear un archivo `.env` local con valores propios:
 
-```bash
-npm install
+```dotenv
+POSTGRES_DB=turnero_db
+POSTGRES_USER=turnero_user
+POSTGRES_PASSWORD=REEMPLAZAR_POR_UNA_CONTRASENA_PROPIA
 ```
 
-### Iniciar la aplicación
+No publicar este archivo ni credenciales en Git. En Linux se recomienda restringir sus permisos:
 
 ```bash
-npm start
+chmod 600 .env
 ```
 
-Por defecto, el servidor utiliza el puerto `3000`.
+Validar e iniciar el stack con permisos para acceder a Docker:
 
-### Acceso a las interfaces
+```bash
+docker compose config --quiet
+docker compose up -d --build
+docker compose ps
+```
 
-| Dirección | Descripción |
+Consultar la salud desde el servidor después de completar el arranque:
+
+```bash
+curl http://127.0.0.1:3000/health
+```
+
+PostgreSQL ejecuta el SQL de inicialización únicamente cuando su directorio de datos está vacío. El script no se vuelve a ejecutar automáticamente sobre un volumen ya inicializado.
+
+Los volúmenes conservan la información al recrear contenedores. No utilizar `docker compose down -v` si se desea conservar esos datos.
+
+### Configuración inicial de las herramientas
+
+Las cuentas de Portainer, Uptime Kuma y Nginx Proxy Manager se crean desde sus interfaces.
+
+Para reproducir el acceso usado en el laboratorio:
+
+1. Crear en Nginx Proxy Manager un Proxy Host `turnero.test` hacia `http://turnero:3000`, con soporte WebSocket.
+2. Configurar en el archivo `hosts` del equipo cliente la IP host-only actual de Debian y el nombre `turnero.test`.
+3. Crear en Uptime Kuma un monitor HTTP hacia `http://turnero:3000/health`.
+
+Estas configuraciones se guardan en los volúmenes de las herramientas; no quedan creadas solamente por clonar el repositorio.
+
+## 6. Acceso a servicios
+
+| Dirección | Servicio |
 |---|---|
-| `http://localhost:3000/` | Pantalla de atención |
-| `http://localhost:3000/ticket-generate.html` | Generación de turnos |
-| `http://localhost:3000/ticket-line.html` | Administración de la cola |
-| `http://localhost:3000/health` | Estado del servicio |
+| `http://turnero.test/` | Pantalla de atención |
+| `http://turnero.test/ticket-generate.html` | Generación de turnos |
+| `http://turnero.test/ticket-line.html` | Cola de turnos |
+| `https://IP_VM:9090` | Cockpit |
+| `https://IP_VM:9443` | Portainer |
+| `http://IP_VM:3001` | Uptime Kuma |
+| `http://IP_VM:81` | Administración de Nginx Proxy Manager |
 
-## 6. Ampliación del proyecto: Laboratorio Full Stack II
+Reemplazar `IP_VM` por la dirección host-only actual. Si cambia por DHCP, actualizar también la entrada de `turnero.test` en el equipo cliente.
 
-La nueva etapa del proyecto se centra en adaptar la aplicación para su ejecución y administración dentro de un entorno de contenedores.
+El acceso de Turnero se verificó mediante HTTP en la red del laboratorio. No se configuró HTTPS para `turnero.test`.
 
-Se busca integrar conceptos de infraestructura, persistencia de datos, administración de servicios, monitoreo y recuperación ante fallas.
+## 7. Backup y recuperación
 
-### Objetivos de la ampliación
+### PostgreSQL
 
-- [ ] Migrar el almacenamiento de datos a PostgreSQL.
-- [ ] Implementar la conexión entre Node.js y PostgreSQL.
-- [ ] Contenerizar la aplicación mediante Docker.
-- [ ] Definir y configurar los servicios con Docker Compose.
-- [ ] Implementar persistencia mediante volúmenes Docker.
-- [ ] Incorporar herramientas de administración y monitoreo.
-- [ ] Establecer una estrategia de respaldo de la base de datos.
-- [ ] Automatizar las copias de seguridad cuando corresponda.
-- [ ] Verificar la recuperación de datos mediante pruebas de restauración.
+El script `scripts/backup.sh`:
 
-### Arquitectura prevista
+- Ejecuta `pg_dump` en formato custom comprimido.
+- Genera un archivo temporal y comprueba que `pg_restore` pueda interpretar su contenido.
+- Publica la copia definitiva después de esas comprobaciones.
+- Utiliza permisos restringidos y un bloqueo para evitar ejecuciones simultáneas.
+- Elimina copias automáticas de más de siete días después de generar una nueva.
 
-La arquitectura propuesta contempla una aplicación Node.js conectada a una base de datos PostgreSQL, ejecutándose en contenedores independientes y comunicándose mediante una red interna de Docker.
+En el entorno implementado utiliza `/home/bruno/turnero-ITS` como ruta del proyecto y `/var/backups/turnero` como destino. Estas rutas deben adaptarse si se instala en otra ubicación.
 
-El entorno incorporará servicios complementarios para facilitar la administración, supervisión y mantenimiento de la aplicación.
+La programación instalada en el crontab de root ejecuta el respaldo diariamente a las 02:00, según la zona horaria argentina del servidor. `scripts/backup.cron` documenta esa entrada; no la instala automáticamente.
 
-La selección definitiva de estas herramientas se documentará a medida que avance la implementación.
+La VM debe estar encendida al llegar el horario. Cron no recupera automáticamente esa ejecución si el servidor estaba apagado.
 
-## 7. Estado del proyecto
+### Configuraciones complementarias
 
-**Versión actual:** aplicación funcional con comunicación en tiempo real y persistencia local mediante JSON.
+Se realizó un respaldo manual separado de:
 
-**Etapa en desarrollo:** migración a PostgreSQL y preparación del entorno Docker Compose.
+- Volumen de Portainer.
+- Volumen de Uptime Kuma.
+- Volúmenes de datos y certificados de Nginx Proxy Manager.
+- `.env` privado, Compose y crontab de root.
 
-La documentación se actualizará conforme se incorporen y validen los nuevos componentes.
+Los servicios correspondientes se detuvieron durante la copia de sus volúmenes y se iniciaron nuevamente al finalizar.
 
-## 8. Contexto académico
+Se copiaron respaldos a Windows mediante SCP y se verificó su integridad comparando SHA-256. Esa transferencia es manual y conserva una copia fuera del disco virtual, pero en el mismo equipo físico.
 
-**Institución:** Instituto Técnico Superior de Cipolletti (ITS).
+Los paquetes privados no se publican en Git.
 
-**Desarrollo original:** Integración de Aplicaciones.
+## 8. Pruebas realizadas y límites
 
-**Ampliación y despliegue:** Laboratorio Full Stack II.
+Se verificaron:
 
-El proyecto permite integrar el desarrollo de aplicaciones web con prácticas de despliegue, administración, monitoreo y recuperación de servicios.
+- Inicialización de PostgreSQL desde una base nueva.
+- Generación, atención y actualización de turnos.
+- Persistencia al recrear los contenedores.
+- Backup y restauración de PostgreSQL en una base separada.
+- Pérdida controlada de datos y recuperación efectiva.
+- Funcionamiento de la aplicación con datos restaurados.
+- Restauración de una copia generada por el script.
+- Ejecución mediante cron y retención con un archivo ficticio antiguo.
+- Detección de caída y recuperación mediante Uptime Kuma.
+- Acceso por proxy y establecimiento de WebSocket con respuesta HTTP 101.
+- Transferencia de respaldos a Windows con huellas coincidentes.
+
+La restauración funcional de los volúmenes de las herramientas complementarias todavía no fue probada. La copia externa no está automatizada y no constituye un respaldo en otro equipo físico.
 
 ## 9. Autor
 
@@ -158,4 +204,4 @@ El proyecto permite integrar el desarrollo de aplicaciones web con prácticas de
 
 Instituto Técnico Superior de Cipolletti.
 
-[Repositorio del proyecto](https://github.com/brunovagnola/turnero-ITS)
+Proyecto académico para Integración de Aplicaciones y Laboratorio Full Stack II.
