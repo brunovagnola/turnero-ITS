@@ -80,11 +80,10 @@ turnero-ITS/
 - Complemento Docker Compose.
 - Puertos necesarios disponibles.
 
-Mientras la integración a `main` esté pendiente, la versión del despliegue se encuentra en `feature/despliegue-debian`.
+La versión del despliegue se encuentra integrada en la rama `main`.
 
 ```bash
-git clone --branch feature/despliegue-debian https://github.com/brunovagnola/turnero-ITS.git
-cd turnero-ITS
+git clone --branch main https://github.com/brunovagnola/turnero-ITS.git
 ```
 
 Crear un archivo `.env` local con valores propios:
