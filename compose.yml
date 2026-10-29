@@ -15,12 +15,53 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  portainer:
+    image: portainer/portainer-ce:lts
+    container_name: turnero-portainer
+    restart: unless-stopped
+
+    ports:
+      - "9443:9443"
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    container_name: turnero-uptime-kuma
+    restart: unless-stopped
+
+    ports:
+      - "3001:3001"
+
+    volumes:
+      - uptime_kuma_data:/app/data
+
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:2.16.0
+    container_name: turnero-proxy
+    restart: unless-stopped
+
+    environment:
+      TZ: America/Argentina/Buenos_Aires
+
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
 
   turnero:
     build: .
@@ -44,3 +85,7 @@ services:
 
 volumes:
   postgres_data:
+  portainer_data:
+  uptime_kuma_data:
+  npm_data:
+  npm_letsencrypt:
