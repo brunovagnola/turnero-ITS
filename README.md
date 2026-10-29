@@ -37,7 +37,7 @@ El navegador accede a `turnero.test`, resuelto localmente hacia la VM. Nginx Pro
 
 La aplicación se conecta a PostgreSQL mediante la red interna de Compose. Uptime Kuma consulta `http://turnero:3000/health`.
 
-La VM utiliza un adaptador NAT para acceder a Internet y otro host-only para la comunicación con Windows. La dirección host-only se obtiene mediante DHCP.
+La VM utiliza un adaptador NAT para acceder a Internet y otro host-only para la comunicación con Windows. La interfaz host-only obtiene la dirección 192.168.56.6 mediante una reserva DHCP en VirtualBox, asociada a su dirección MAC. Esta reserva pertenece a la configuración de VirtualBox del equipo anfitrión y debe recrearse si el entorno se traslada a otro equipo.
 
 ## 4. Estructura del proyecto
 
@@ -143,7 +143,7 @@ Estas configuraciones se guardan en los volúmenes de las herramientas; no queda
 | `http://IP_VM:3001` | Uptime Kuma |
 | `http://IP_VM:81` | Administración de Nginx Proxy Manager |
 
-Reemplazar `IP_VM` por la dirección host-only actual. Si cambia por DHCP, actualizar también la entrada de `turnero.test` en el equipo cliente.
+En este laboratorio, IP_VM corresponde a 192.168.56.6. La dirección se mantiene mediante una reserva DHCP y la entrada del archivo hosts de Windows asocia esa IP con turnero.test. Si se modifica la dirección del servidor, también deberá actualizarse esa entrada.
 
 El acceso de Turnero se verificó mediante HTTP en la red del laboratorio. No se configuró HTTPS para `turnero.test`.
 
@@ -176,7 +176,7 @@ Se realizó un respaldo manual separado de:
 
 Los servicios correspondientes se detuvieron durante la copia de sus volúmenes y se iniciaron nuevamente al finalizar.
 
-Se copiaron respaldos a Windows mediante SCP y se verificó su integridad comparando SHA-256. Esa transferencia es manual y conserva una copia fuera del disco virtual, pero en el mismo equipo físico.
+Se copiaron respaldos a Windows mediante SCP y se verificó su integridad comparando SHA-256. El 29/10/2026 también se copiaron a un dispositivo USB los respaldos de PostgreSQL y de configuración generados el 25/10/2026. Ambas comparaciones SHA-256 entre Windows y el USB resultaron coincidentes. La transferencia externa es manual y permite conservar una copia en un dispositivo físico separado del disco de la computadora.
 
 Los paquetes privados no se publican en Git.
 
@@ -195,8 +195,10 @@ Se verificaron:
 - Detección de caída y recuperación mediante Uptime Kuma.
 - Acceso por proxy y establecimiento de WebSocket con respuesta HTTP 101.
 - Transferencia de respaldos a Windows con huellas coincidentes.
+- Restauración funcional de Nginx Proxy Manager, Uptime Kuma y Portainer en contenedores de prueba con datos separados de los originales.
+- Copia de respaldos a un dispositivo USB con verificación SHA-256 coincidente.
 
-La restauración funcional de los volúmenes de las herramientas complementarias todavía no fue probada. La copia externa no está automatizada y no constituye un respaldo en otro equipo físico.
+Las restauraciones de las herramientas complementarias permitieron comprobar la recuperación de sus configuraciones y accesos. En Uptime Kuma también se verificaron el monitor y su historial; en Nginx Proxy Manager, el enrutamiento hacia la aplicación original. No se realizó una recuperación completa de la VM. La transferencia a Windows y al USB es manual. La comprobación del USB verificó la integridad de la copia; no se repitió una restauración desde ese dispositivo.
 
 ## 9. Autor
 
