@@ -253,8 +253,13 @@ Se comprobaron en Windows con Docker Desktop:
 La simulación no modificó el reloj y no equivale a observar una
 transición real por medianoche en el navegador.
 
-Esta mejora está en feature/jornadas-turnero. Su despliegue y
-verificación en Debian están pendientes antes de integrarla a main.
+También se verificaron en Debian la migración conservando los siete
+turnos históricos, la generación y atención de una nueva jornada
+mediante el proxy, los contadores independientes y la generación
+de un respaldo con el esquema ampliado.
+
+Las pruebas de múltiples clientes, simulación del cambio de día y
+restauración del esquema ampliado se realizaron en Windows.
 
 ## 10. Autor
 
