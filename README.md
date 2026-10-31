@@ -199,7 +199,69 @@ Se verificaron:
 
 Las restauraciones de las herramientas complementarias permitieron comprobar la recuperación de sus configuraciones y accesos. En Uptime Kuma también se verificaron el monitor y su historial; en Nginx Proxy Manager, el enrutamiento hacia la aplicación original. No se realizó una recuperación completa de la VM. La transferencia a Windows y al USB es manual. La comprobación del USB verificó la integridad de la copia; no se repitió una restauración desde ese dispositivo.
 
-## 9. Autor
+## 9. Turnos por jornada
+
+La aplicación gestiona turnos anónimos, sin registrar personas.
+Cada turno pertenece a una jornada calculada según la zona
+America/Argentina/Buenos_Aires.
+
+### Comportamiento
+
+- La numeración comienza en A-001 en cada jornada.
+- Los datos y el contador persisten al recrear la aplicación.
+- La cola y el turno actual muestran únicamente la jornada vigente.
+- Los pendientes de días anteriores permanecen en el historial,
+  pero no se trasladan automáticamente a la cola del nuevo día.
+- El historial se conserva en PostgreSQL; todavía no tiene una
+  pantalla de consulta.
+- Las pantallas abiertas reciben el cambio de jornada mediante
+  una comprobación periódica cada cinco segundos.
+- El contador y la inserción del turno se actualizan en una sola
+  sentencia SQL. La combinación jornada y número es única.
+
+### Instalación y actualización
+
+En una base nueva, db/init/001-turnos.sql crea las tablas jornadas
+y turnos, sus restricciones y su relación.
+
+Para actualizar una base de la versión anterior:
+
+1. Generar un respaldo antes del cambio.
+2. Detener la aplicación y mantener PostgreSQL activo.
+3. Aplicar una sola vez db/migrations/002-jornadas.sql mediante
+   psql con ON_ERROR_STOP=1.
+4. Iniciar la imagen de la aplicación compatible con jornadas.
+5. Verificar registros, contadores y funcionamiento.
+
+La migración asigna los turnos existentes a su fecha local de
+creación y conserva sus datos. Cambiar de rama en Git no revierte
+los cambios realizados en PostgreSQL.
+
+### Validaciones de esta mejora
+
+Se comprobaron en Windows con Docker Desktop:
+
+- Migración conservando los cuatro turnos existentes.
+- Numeración independiente en fechas diferentes.
+- Persistencia y continuidad de numeración al recrear la aplicación.
+- Diez clientes solicitando un turno cada uno, sin números repetidos.
+- Creación del esquema en una base nueva.
+- Simulación controlada del cambio de día, verificando los eventos
+  del servidor y los datos en una base separada.
+- Backup y restauración de turnos y contadores en otra base.
+
+La simulación no modificó el reloj y no equivale a observar una
+transición real por medianoche en el navegador.
+
+También se verificaron en Debian la migración conservando los siete
+turnos históricos, la generación y atención de una nueva jornada
+mediante el proxy, los contadores independientes y la generación
+de un respaldo con el esquema ampliado.
+
+Las pruebas de múltiples clientes, simulación del cambio de día y
+restauración del esquema ampliado se realizaron en Windows.
+
+## 10. Autor
 
 **Bruno Vagnola**
 
