@@ -261,7 +261,20 @@ de un respaldo con el esquema ampliado.
 Las pruebas de múltiples clientes, simulación del cambio de día y
 restauración del esquema ampliado se realizaron en Windows.
 
-## 10. Autor
+## 10. Panel de acceso a servicios
+
+Homepage centraliza los accesos a las tres pantallas del turnero y a
+Cockpit, Portainer, Uptime Kuma y Nginx Proxy Manager.
+
+Disponible en http://192.168.56.6:8080 desde el equipo anfitrión.
+Facilita la administración del entorno sin memorizar las direcciones
+y puertos de cada servicio. Cada herramienta conserva su autenticación.
+
+La configuración se conserva en dashboard/ y los registros de ejecución
+se excluyen de Git. Se verificó el estado healthy del contenedor,
+la apertura de los siete accesos y el inicio de sesión en las herramientas.
+
+## 11. Autor
 
 **Bruno Vagnola**
 

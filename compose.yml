@@ -83,6 +83,22 @@ services:
       postgres:
         condition: service_healthy
 
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: turnero-dashboard
+    restart: unless-stopped
+
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: "192.168.56.6:8080"
+      PUID: "1000"
+      PGID: "1000"
+
+    ports:
+      - "192.168.56.6:8080:3000"
+
+    volumes:
+      - ./dashboard:/app/config
+
 volumes:
   postgres_data:
   portainer_data:
