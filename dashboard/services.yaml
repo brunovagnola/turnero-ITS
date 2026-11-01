@@ -1,0 +1,24 @@
+- Turnero:
+    - Pantalla de turnos:
+        href: http://turnero.test/
+        description: Visualización del turno en atención
+    - Generar turno:
+        href: http://turnero.test/ticket-generate.html
+        description: Emisión de turnos de la jornada
+    - Cola de turnos:
+        href: http://turnero.test/ticket-line.html
+        description: Consulta y atención de pendientes
+
+- Administración:
+    - Cockpit:
+        href: https://192.168.56.6:9090/
+        description: Administración del servidor Debian
+    - Portainer:
+        href: https://192.168.56.6:9443/
+        description: Administración de contenedores y registros
+    - Uptime Kuma:
+        href: http://192.168.56.6:3001/
+        description: Disponibilidad e historial de interrupciones
+    - Nginx Proxy Manager:
+        href: http://192.168.56.6:81/
+        description: Administración del proxy inverso

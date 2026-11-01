@@ -1,0 +1,15 @@
+title: Turnero ITS | Panel de servicios
+description: Laboratorio Full Stack II - ITS Cipolletti
+language: es
+theme: dark
+color: slate
+headerStyle: clean
+target: _blank
+
+layout:
+  Turnero:
+    style: row
+    columns: 3
+  Administración:
+    style: row
+    columns: 2
